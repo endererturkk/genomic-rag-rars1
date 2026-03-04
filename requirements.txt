@@ -9,3 +9,4 @@ python-dotenv
 tenacity
 numpy
 scikit-learn
+ollama
