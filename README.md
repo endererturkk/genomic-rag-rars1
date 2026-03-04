@@ -23,37 +23,12 @@ Adversarial robustness
 
 Explicit safe fallback behavior
 
-This is not a general-purpose chatbot. It is a controlled biomedical extraction pipeline designed to ensure traceable and verifiable outputs.
+This is not a general-purpose chatbot. It is a controlled biomedical extraction pipeline designed to ensure traceable and verifiable outputs.  
 
 
 
-
-Ilyome Biomedical RAG System
-Overview
-
-This project implements a guarded Retrieval-Augmented Generation (RAG) system for structured extraction of biomedical knowledge from PubMed literature related to the RARS1 gene.
-
-The system retrieves recent scientific abstracts from PubMed and extracts structured biomedical information, including:
-
-cDNA HGVS variants
-
-Associated diseases
-
-Associated phenotypes
-
-Grounded PubMed citations (PMIDs)
-
-The architecture prioritizes:
-
-Evidence grounding
-
-Hallucination prevention
-
-Adversarial robustness
-
-Explicit safe fallback behavior
-
-This is not a general-purpose chatbot. It is a controlled biomedical extraction pipeline designed to ensure traceable and verifiable outputs.  RARS1[Title/Abstract]
+1. Data Ingestion
+RARS1[Title/Abstract]
 
 Retrieve the most recent publications (configured to 30 results).
 
@@ -166,7 +141,27 @@ Only retrieved context is passed to the language model.
 The LLM cannot access external knowledge.
 
 
-4. Strict Extraction Contract
+
+4. Local LLM Extraction
+
+The extraction step is performed using a locally hosted language model via Ollama.
+
+Using a local LLM ensures:
+
+• No external API dependency  
+• Full control over inference behavior  
+• Reproducible results  
+
+Before running the system, ensure Ollama is installed and a compatible model is available.
+
+Example:
+
+ollama run llama3
+
+
+
+
+5. Strict Extraction Contract
 
 The language model operates under a strict prompt contract.
 
@@ -326,7 +321,8 @@ The design aims to minimize hallucination risk while preserving traceable biomed
 
 How to Run
 conda activate ilyome-rag
-python ingest.py
+python ingest.py          # fetch PubMed abstracts
+python main.py            # run retrieval + extraction pipeline
 python evaluation/run_eval.py
 python evaluation/metrics.py
 
@@ -339,3 +335,24 @@ Final Note
 In biomedical systems, generating incorrect scientific claims is more harmful than returning no answer.
 
 This system is designed to prefer abstention over hallucination, ensuring that all extracted knowledge is grounded in verifiable scientific literature.
+
+
+System Summary
+
+PubMed API
+↓
+Abstract ingestion
+↓
+Variant-safe chunking
+↓
+BGE-large embeddings
+↓
+Chroma vector database
+↓
+Retriever
+↓
+Local LLM extraction (Ollama)
+↓
+Guardrail validation
+↓
+Structured biomedical output
