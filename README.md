@@ -1,267 +1,280 @@
-Ilyome Biomedical RAG System
-Overview
+# 🧬 Ilyome Biomedical RAG System
 
-This project implements a guarded Retrieval-Augmented Generation (RAG) system for structured extraction of biomedical knowledge from PubMed literature related to the RARS1 gene.
+![Python](https://img.shields.io/badge/python-3.10-blue)
+![RAG](https://img.shields.io/badge/RAG-Biomedical-green)
+![VectorDB](https://img.shields.io/badge/VectorDB-Chroma-orange)
+![LLM](https://img.shields.io/badge/LLM-Ollama-purple)
+![Status](https://img.shields.io/badge/status-research--prototype-lightgrey)
+
+A guarded Retrieval-Augmented Generation (RAG) system for extracting **RARS1 gene variants, diseases, and phenotypes** from PubMed literature with **citation grounding and hallucination guardrails**.
+
+---
+
+# Overview
+
+This project implements a guarded Retrieval-Augmented Generation (RAG) system for structured extraction of biomedical knowledge from **PubMed literature related to the RARS1 gene**.
 
 The system retrieves recent scientific abstracts from PubMed and extracts structured biomedical information, including:
 
-cDNA HGVS variants
-
-Associated diseases
-
-Associated phenotypes
-
-Grounded PubMed citations (PMIDs)
+- 🧬 **cDNA HGVS variants**
+- 🦠 **Associated diseases**
+- 🧠 **Associated phenotypes**
+- 📄 **Grounded PubMed citations (PMIDs)**
 
 The architecture prioritizes:
 
-Evidence grounding
+- Evidence grounding  
+- Hallucination prevention  
+- Adversarial robustness  
+- Explicit safe fallback behavior  
 
-Hallucination prevention
+This is **not a general-purpose chatbot**.  
+It is a **controlled biomedical extraction pipeline designed to ensure traceable and verifiable outputs**.
 
-Adversarial robustness
+---
 
-Explicit safe fallback behavior
+# 🏗 System Architecture
+PubMed API
+↓
+Abstract Ingestion
+↓
+Variant-Safe Chunking
+↓
+BGE-large Embeddings
+↓
+Chroma Vector Store
+↓
+Retriever
+↓
+Local LLM (Ollama)
+↓
+Guardrail Validation
+↓
+Structured Biomedical Output
 
-This is not a general-purpose chatbot. It is a controlled biomedical extraction pipeline designed to ensure traceable and verifiable outputs.  
 
 
+---
 
-1. Data Ingestion
+# 1️⃣ Data Ingestion
+
+The ingestion pipeline retrieves biomedical literature from PubMed using the following query:
 RARS1[Title/Abstract]
 
-Retrieve the most recent publications (configured to 30 results).
+The system retrieves the **most recent publications (configured to 30 results)**.
 
-Fetch abstract metadata including:
+For each article, the following metadata is extracted:
 
-PMID
+- PMID
+- DOI
+- Title
+- Authors
+- Publication year
+- Abstract text
 
-DOI
-
-Title
-
-Authors
-
-Publication year
-
-Abstract text
-
-Normalize the retrieved records into structured JSON format.
-
-Store normalized records in:    data/raw/pubmed_rars1_latest.json
-
-This approach ensures that the system always operates on recent biomedical literature instead of static datasets.
+The retrieved records are normalized into structured JSON format and stored in:
+data/raw/pubmed_rars1_latest.json
 
 
+This approach ensures the system operates on **recent biomedical literature instead of static datasets**.
 
+---
 
+# PubMed API Rate Limiting
 
-PubMed API Rate Limiting
-
-The ingestion pipeline respects NCBI API policies.
+The ingestion pipeline respects **NCBI API usage policies**.
 
 To ensure stable and compliant API usage:
 
-A 0.34 second delay is introduced between requests.
+- A **0.34 second delay** is introduced between requests.
+- The **Tenacity library** implements exponential backoff retry logic.
 
-The Tenacity library implements exponential backoff retry logic.
+This handles transient failures such as:
 
-This handles transient errors such as:
+- network errors  
+- temporary API interruptions  
+- NCBI throttling  
 
-network failures
+---
 
-temporary API interruptions
+# 2️⃣ Knowledge Processing & Storage
 
-NCBI throttling
-
-2. Knowledge Processing & Storage
-Variant-Safe Chunking
+## Variant-Safe Chunking
 
 Medical abstracts are split into chunks before embedding.
 
-Special care is taken to avoid splitting HGVS variant expressions such as:  c.1535G>A
+Special care is taken to avoid splitting HGVS variant expressions such as:
+c.1535G>A
+
+
 
 Variant patterns are detected before chunk boundaries are applied to ensure mutation identifiers remain intact.
 
-Chunk configuration:   Chunk size: 500 characters
-                       Overlap: 50 characters
+Chunk configuration;
+Chunk size: 500 characters
+Overlap: 50 characters
 
 
 
-Embeddings
+---
 
-Embedding model used:      BAAI/bge-large-en
+## Embeddings
 
-This model was selected because it provides strong semantic retrieval performance, especially for scientific and technical text.
-
-Its dense embedding representations are well suited for biomedical literature search tasks.
+Embedding model used: BAAI/bge-large-en
 
 
 
-Vector Store
+This model was selected because it provides **strong semantic retrieval performance for scientific text**.
 
-The processed chunks are indexed into a persistent Chroma vector database.
+Its dense embedding representations are well suited for **biomedical literature search tasks**.
+
+---
+
+## Vector Store
+
+The processed chunks are indexed into a **persistent Chroma vector database**.
 
 Stored metadata includes:
 
-PMID
+- PMID  
+- DOI  
+- Publication year  
+- Source  
 
-DOI
+This allows efficient **similarity-based retrieval of relevant scientific evidence**.
 
-Publication year
+---
 
-Source
+# 3️⃣ Retrieval Layer
 
-This allows efficient similarity-based retrieval of relevant scientific evidence.
-
-
-
-
-3. Retrieval Layer
-
-User queries are processed using the following pipeline:
+The retrieval pipeline operates as follows:
 Query
- ↓
+↓
 Embedding
- ↓
+↓
 Similarity Search
- ↓
+↓
 Top-K Relevant Chunks
 
 
 
 
-Retrieved chunks are formatted as:  [PMID: XXXXXXXX]
-                                     Abstract text
+Retrieved chunks are formatted as:
+[PMID: XXXXXXXX]
+Abstract text
 
 
 
 Only retrieved context is passed to the language model.
 
-The LLM cannot access external knowledge.
+The LLM **cannot access external knowledge**.
 
+---
 
+# 4️⃣ Local LLM Extraction
 
-4. Local LLM Extraction
-
-The extraction step is performed using a locally hosted language model via Ollama.
+The extraction step is performed using a **locally hosted language model via Ollama**.
 
 Using a local LLM ensures:
 
-• No external API dependency  
-• Full control over inference behavior  
-• Reproducible results  
+- No external API dependency  
+- Full control over inference behavior  
+- Reproducible results  
 
-Before running the system, ensure Ollama is installed and a compatible model is available.
+Before running the system, ensure **Ollama is installed** and a compatible model is available.
 
-Example:
-
-ollama run llama3
+Example:  ollama run llama3
 
 
+---
 
+# 5️⃣ Strict Extraction Contract
 
-5. Strict Extraction Contract
-
-The language model operates under a strict prompt contract.
+The language model operates under a **strict prompt contract**.
 
 Rules:
 
-Only use provided context
-
-No external knowledge
-
-No inference beyond text
-
-JSON-only output
-
-No explanations
-
-No markdown
-
-No fabricated citations
+- Only use provided context  
+- No external knowledge  
+- No inference beyond text  
+- JSON-only output  
+- No explanations  
+- No markdown  
+- No fabricated citations  
 
 Each variant must:
 
-Contain exactly one cDNA HGVS notation (e.g., c.1535G>A)
-
-Exclude protein annotation
-
-Include PMIDs as a list of strings
+- Contain exactly **one cDNA HGVS notation** (e.g., `c.1535G>A`)
+- Exclude protein annotations
+- Include PMIDs as a **list of strings**
 
 If no evidence is found, the system returns a safe fallback:
 {
-  "answer": "No evidence found in retrieved literature.",
-  "confidence": "high",
-  "citations": []
+"answer": "No evidence found in retrieved literature.",
+"confidence": "high",
+"citations": []
 }
 
 
 
 
-Guardrail Layer
+---
+
+# 🛡 Guardrail Layer
 
 After extraction, multiple validation layers are applied.
 
-Variant Processing
+### Variant Processing
 
-Multi-variant splitting
+- multi-variant splitting  
+- protein annotation removal  
+- context existence validation  
+- citation validation against retrieved metadata  
+- duplicate variant merging (PMID union + sorting)
 
-Protein annotation removal
-
-Context existence validation
-
-Citation validation against retrieved metadata
-
-Duplicate variant merging (PMID union + sorting)
-
-Disease & Phenotype Validation
+### Disease & Phenotype Validation
 
 Additional checks include:
 
-citation validation
+- citation validation  
+- context grounding verification  
+- disease mention validation  
 
-context grounding verification
+### Generic Disease Association Guard
 
-disease mention validation
+If a query asks about disease associations such as:
 
-Generic Disease Association Guard
+- "associated with X"  
+- "linked to X"  
+- "related to X"  
+- "causes X"  
 
-If the query asks about a disease association such as:
+and the disease does not appear in validated literature, the system returns a **safe fallback**.
 
-"associated with X"
+This prevents **false-positive disease associations**.
 
-"linked to X"
+---
 
-"related to X"
-
-"causes X"
-
-and the disease does not appear in validated literature, the system returns a safe fallback.
-
-This prevents false-positive disease associations.
-
-
-
-Evaluation
+# 📊 Evaluation
 
 Evaluation is fully automated.
 
-Scripts:  evaluation/run_eval.py  evaluation/metrics.py
+Scripts:
+evaluation/run_eval.py
+evaluation/metrics.py
+
 
 
 Test categories include:
 
-Normal query (structured extraction expected)
-
-Trick query (disease not associated with RARS1)
-
-Negative disease query
-
-Variant-focused query
+| Test Type | Purpose |
+|-----------|--------|
+| Normal Query | Structured extraction |
+| Trick Query | Detect hallucinated associations |
+| Negative Query | Safe fallback behavior |
+| Variant Query | Variant extraction validation |
 
 Example metrics output:
-
 total_tests: 4
 structured_tests: 2
 fallback_tests: 2
@@ -270,89 +283,94 @@ negative_passed: True
 normal_has_variants: True
 overall_score: 1.0
 
-The evaluation verifies that the system:
-
-extracts valid variants
-
-avoids hallucinated disease associations
-
-returns safe fallbacks for unsupported queries
 
 
+Evaluation verifies that the system:
 
-Safety Guarantees
+- extracts valid variants  
+- avoids hallucinated disease associations  
+- returns safe fallbacks for unsupported queries  
+
+---
+
+# 🔒 Safety Guarantees
 
 The system enforces:
 
-No hallucinated PMIDs
+- No hallucinated PMIDs  
+- No unsupported disease associations  
+- No cross-document citation leakage  
+- Explicit abstention when evidence is insufficient  
+- Deduplicated and normalized variant output  
 
-No unsupported disease associations
-
-No cross-document citation leakage
-
-Explicit abstention when evidence is insufficient
-
-Deduplicated and normalized variant output
-
-The model is allowed to abstain rather than speculate.
+The model is **allowed to abstain rather than speculate**.
 
 Precision is prioritized over recall.
 
-Design Philosophy
+---
+
+# 🧠 Design Philosophy
 
 This system demonstrates:
 
-Structured biomedical information extraction
+- Structured biomedical information extraction  
+- Evidence-grounded language model outputs  
+- Contract-based LLM control  
+- Multi-layer guardrails  
+- Adversarial query handling  
+- Automated evaluation scoring  
 
-Evidence-grounded language model outputs
+The design aims to **minimize hallucination risk while preserving traceable biomedical evidence**.
 
-Contract-based LLM control
+---
 
-Multi-layer guardrails
+# ⚙️ How to Run
 
-Adversarial query handling
+Follow the steps below to run the system locally.
 
-Automated evaluation scoring
+1️⃣ Activate environment
 
-The design aims to minimize hallucination risk while preserving traceable biomedical evidence.
-
-
-
-
-How to Run
 conda activate ilyome-rag
-python ingest.py          # fetch PubMed abstracts
-python main.py            # run retrieval + extraction pipeline
+
+
+
+2️⃣ Retrieve PubMed data
+
+python ingest.py
+
+
+3️⃣ Run the RAG pipeline
+
+python main.py
+
+
+4️⃣ Run evaluation
+Run the automated evaluation suite.
 python evaluation/run_eval.py
 python evaluation/metrics.py
 
-Outputs
+📂 Outputs
+The evaluation process generates the following file:
 eval_results.json
-metrics summary in terminal
-
-Final Note
-
-In biomedical systems, generating incorrect scientific claims is more harmful than returning no answer.
-
-This system is designed to prefer abstention over hallucination, ensuring that all extracted knowledge is grounded in verifiable scientific literature.
 
 
-System Summary
 
-PubMed API
-↓
-Abstract ingestion
-↓
-Variant-safe chunking
-↓
-BGE-large embeddings
-↓
-Chroma vector database
-↓
-Retriever
-↓
-Local LLM extraction (Ollama)
-↓
-Guardrail validation
-↓
-Structured biomedical output
+
+Fetch the latest RARS1-related abstracts from PubMed.
+
+Metrics summary is printed in the terminal.
+
+---
+
+# ⚠️ Final Note
+
+In biomedical systems, generating incorrect scientific claims is **more harmful than returning no answer**.
+
+This system is designed to **prefer abstention over hallucination**, ensuring that all extracted knowledge remains **grounded in verifiable scientific literature**.
+
+
+
+
+
+
+
