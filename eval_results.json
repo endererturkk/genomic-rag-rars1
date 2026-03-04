@@ -1,0 +1,169 @@
+{
+  "generated_at_utc": "2026-03-03T21:09:23.577124+00:00",
+  "output_file": "C:\\CODING\\ilyomeProject\\eval_results.json",
+  "tests": [
+    {
+      "id": "normal_1",
+      "label": "normal",
+      "query": "What are the most recently reported variants in RARS1 and their associated symptoms?",
+      "timestamp_utc": "2026-03-03T21:09:33.429613+00:00",
+      "raw_result": {
+        "variants": [
+          {
+            "variant": "c.5A>G",
+            "pmid": [
+              "31814314",
+              "37186453",
+              "38618971"
+            ]
+          },
+          {
+            "variant": "c.1535G>A",
+            "pmid": [
+              "37186453"
+            ]
+          }
+        ],
+        "diseases": [
+          {
+            "name": "Hypomyelinating leukodystrophy",
+            "pmid": [
+              "37186453"
+            ]
+          }
+        ],
+        "phenotypes": [
+          {
+            "name": "Developmental delay",
+            "pmid": [
+              "37186453"
+            ]
+          },
+          {
+            "name": "Intellectual disability",
+            "pmid": [
+              "37186453"
+            ]
+          },
+          {
+            "name": "Hypomyelination",
+            "pmid": [
+              "37186453"
+            ]
+          }
+        ]
+      },
+      "type": "structured_extraction",
+      "summary": {
+        "variants_count": 2,
+        "diseases_count": 1,
+        "phenotypes_count": 3
+      }
+    },
+    {
+      "id": "trick_1",
+      "label": "trick",
+      "query": "Is RARS1 associated with cystic fibrosis?",
+      "timestamp_utc": "2026-03-03T21:09:41.333056+00:00",
+      "raw_result": {
+        "answer": "No evidence found in retrieved literature.",
+        "confidence": "high",
+        "citations": []
+      },
+      "type": "fallback_answer",
+      "summary": {
+        "answer": "No evidence found in retrieved literature.",
+        "confidence": "high",
+        "citations_count": 0
+      }
+    },
+    {
+      "id": "negative_1",
+      "label": "negative",
+      "query": "Is RARS1 associated with malaria?",
+      "timestamp_utc": "2026-03-03T21:09:49.275929+00:00",
+      "raw_result": {
+        "answer": "No evidence found in retrieved literature.",
+        "confidence": "high",
+        "citations": []
+      },
+      "type": "fallback_answer",
+      "summary": {
+        "answer": "No evidence found in retrieved literature.",
+        "confidence": "high",
+        "citations_count": 0
+      }
+    },
+    {
+      "id": "variants_1",
+      "label": "variants",
+      "query": "List reported RARS1 cDNA variants mentioned in the literature and cite PMIDs.",
+      "timestamp_utc": "2026-03-03T21:10:00.921006+00:00",
+      "raw_result": {
+        "variants": [
+          {
+            "variant": "c.1535G>A",
+            "pmid": [
+              "33515434",
+              "37186453"
+            ]
+          },
+          {
+            "variant": "c.5A>G",
+            "pmid": [
+              "31814314",
+              "33515434"
+            ]
+          },
+          {
+            "variant": "c.1367C>T",
+            "pmid": [
+              "33515434"
+            ]
+          },
+          {
+            "variant": "c.1846_1847del",
+            "pmid": [
+              "33515434"
+            ]
+          }
+        ],
+        "diseases": [
+          {
+            "name": "Hypomyelinating leukodystrophy",
+            "pmid": [
+              "37186453"
+            ]
+          },
+          {
+            "name": "Pelizaeus-Merzbacher-like disease (PMLD)",
+            "pmid": [
+              "33515434"
+            ]
+          }
+        ],
+        "phenotypes": [
+          {
+            "name": "Intellectual disability",
+            "pmid": [
+              "37186453"
+            ]
+          },
+          {
+            "name": "Developmental delay",
+            "pmid": [
+              "37186453",
+              "31814314"
+            ]
+          }
+        ]
+      },
+      "type": "structured_extraction",
+      "summary": {
+        "variants_count": 4,
+        "diseases_count": 2,
+        "phenotypes_count": 2
+      }
+    }
+  ]
+}

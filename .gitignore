@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+
+data/processed/vector_store/
+
+.env
+.DS_Store

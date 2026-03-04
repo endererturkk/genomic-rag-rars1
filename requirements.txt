@@ -1,0 +1,11 @@
+biopython
+requests
+tqdm
+chromadb
+sentence-transformers
+openai
+pydantic
+python-dotenv
+tenacity
+numpy
+scikit-learn
